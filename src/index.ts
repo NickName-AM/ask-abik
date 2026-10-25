@@ -1,6 +1,6 @@
 import { answerQuestion, type GatewayOptions } from "./answer";
 
-const FAILED = "Sorry, I couldn't answer that right now. You can email Abik at maharjanebik061@gmail.com.";
+const FAILED = "Sorry, Bubluuuu couldn't answer that right now. You can email Abik at maharjanebik061@gmail.com.";
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {

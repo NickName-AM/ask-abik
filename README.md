@@ -3,6 +3,9 @@
 A small Cloudflare Worker that answers visitors' questions about Abik Maharjan, using his CV.
 The portfolio's "Ask about me" form calls it server-side.
 
+The assistant is called Bubluuuu: cheerful, a bit playful, and fond of cats (its own trait, never
+presented as Abik's). The persona lives at the top of `profile/system-prompt.md`.
+
 - Model: `@cf/qwen/qwen3-30b-a3b-fp8` (thinking off) on Workers AI, falling back to `@cf/zai-org/glm-4.7-flash`.
 - Knowledge: `profile/cv.md`, inserted in full into `profile/system-prompt.md` at `{{CV}}`. No RAG.
 - Cost: Workers Free plan only. One question is about 8-10 neurons out of 10,000/day.
