@@ -67,7 +67,8 @@ async function callModel(ai: Ai, model: string, question: string, gateway?: Gate
   };
   // GLM thinks by default; the reasoning tokens would be most of the bill.
   if (model === FALLBACK_MODEL) input.chat_template_kwargs = { enable_thinking: false };
-  const run = ai.run as unknown as RunFn;
+  // bind: the real binding reads private fields off `this`; a detached call throws.
+  const run = (ai.run as unknown as RunFn).bind(ai);
   return cleanAnswer(await (gateway ? run(model, input, { gateway }) : run(model, input)));
 }
 

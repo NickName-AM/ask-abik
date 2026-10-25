@@ -68,6 +68,19 @@ describe("answerQuestion", () => {
     expect(direct.run.mock.calls[0]).toHaveLength(2);
   });
 
+  it("calls run on the binding itself, with and without a gateway", async () => {
+    // Like the real binding, run() fails unless `this` is the binding.
+    class BoundAi {
+      #options = { ok: true };
+      run(this: BoundAi) {
+        return Promise.resolve({ response: this.#options.ok ? "bound" : "" });
+      }
+    }
+    const ai = new BoundAi() as unknown as Ai;
+    expect(await answerQuestion(ai, "q", { id: "default" })).toBe("bound");
+    expect(await answerQuestion(ai, "q")).toBe("bound");
+  });
+
   it("returns null when both models fail", async () => {
     const ai = fakeAi(async () => {
       throw new Error("down");
