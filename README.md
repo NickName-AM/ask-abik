@@ -31,6 +31,18 @@ The portfolio's "Ask about me" form calls it server-side.
 - `DAILY_LIMIT` (default 300): approximate daily cap, counted in KV under `count:YYYY-MM-DD`.
   It leaves room in the shared 10k neurons/day for `api-changelog-watcher`.
 
+## AI Gateway
+
+Model calls go through AI Gateway (free on every plan), set by `AI_GATEWAY_ID`
+(default `"default"`, which Cloudflare creates on the first request). You get request
+analytics and logs in the dashboard, and caching: the same question within
+`AI_CACHE_TTL` (default 1 day) is answered from the cache without using neurons.
+After editing `profile/cv.md`, cached answers can be up to that old.
+Set `AI_GATEWAY_ID = ""` to call Workers AI directly.
+
+Gateway logs include each visitor's question and the answer. Turn logging off in the
+gateway's settings if you would rather not keep them.
+
 ## Develop
 
 ```sh

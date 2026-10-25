@@ -1,4 +1,4 @@
-import { answerQuestion } from "./answer";
+import { answerQuestion, type GatewayOptions } from "./answer";
 
 const FAILED = "Sorry, I couldn't answer that right now. You can email Abik at maharjanebik061@gmail.com.";
 
@@ -30,6 +30,17 @@ function intVar(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
+/**
+ * Routes Workers AI calls through AI Gateway (free) for analytics, logs and caching.
+ * An identical question within the TTL is answered from the cache and costs no neurons.
+ * Set AI_GATEWAY_ID to "" to call Workers AI directly.
+ */
+export function gatewayOptions(env: Env): GatewayOptions | undefined {
+  const id = env.AI_GATEWAY_ID?.trim();
+  if (!id) return undefined;
+  return { id, cacheTtl: intVar(env.AI_CACHE_TTL, 86_400), metadata: { app: "ask-abik" } };
+}
+
 export function dayKey(now = new Date()): string {
   return `count:${now.toISOString().slice(0, 10)}`;
 }
@@ -58,7 +69,7 @@ async function handleAsk(req: Request, env: Env, ctx: ExecutionContext): Promise
   if (used >= intVar(env.DAILY_LIMIT, 300)) return json({ error: "daily limit" }, 429);
   ctx.waitUntil(env.ASK_KV.put(key, String(used + 1), { expirationTtl: 2 * 86_400 }));
 
-  const answer = await answerQuestion(env.AI, question);
+  const answer = await answerQuestion(env.AI, question, gatewayOptions(env));
   if (!answer) return json({ error: "model failed", message: FAILED }, 502);
   return json({ answer });
 }

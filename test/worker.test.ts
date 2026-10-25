@@ -1,7 +1,7 @@
 import { createExecutionContext, env, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PRIMARY_MODEL } from "../src/answer";
-import worker, { dayKey } from "../src/index";
+import worker, { dayKey, gatewayOptions } from "../src/index";
 
 const testEnv = { ...env, ASK_TOKEN: "test-token", DAILY_LIMIT: "3", MAX_QUESTION_CHARS: "50" };
 const auth = { authorization: "Bearer test-token", "content-type": "application/json", "x-visitor-ip": "1.2.3.4" };
@@ -17,6 +17,13 @@ async function ask(body: unknown, headers: Record<string, string> = auth, e: Env
 afterEach(async () => {
   vi.restoreAllMocks();
   await env.ASK_KV.delete(dayKey());
+});
+
+describe("gatewayOptions", () => {
+  it("reads the id and TTL from vars, and turns off on an empty id", () => {
+    expect(gatewayOptions({ ...testEnv, AI_GATEWAY_ID: "ask", AI_CACHE_TTL: "60" })).toEqual({ id: "ask", cacheTtl: 60, metadata: { app: "ask-abik" } });
+    expect(gatewayOptions({ ...testEnv, AI_GATEWAY_ID: "" })).toBeUndefined();
+  });
 });
 
 describe("fetch handler", () => {
@@ -52,6 +59,7 @@ describe("fetch handler", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ answer: "He uses Cloudflare Workers." });
     expect(run.mock.calls[0]![0]).toBe(PRIMARY_MODEL);
+    expect(run.mock.calls[0]![2]).toEqual({ gateway: { id: "default", cacheTtl: 86_400, metadata: { app: "ask-abik" } } });
     expect(await env.ASK_KV.get(dayKey())).toBe("1");
 
     await env.ASK_KV.put(dayKey(), "3");

@@ -53,6 +53,21 @@ describe("answerQuestion", () => {
     expect(ai.run.mock.calls[1]![1]).toMatchObject({ chat_template_kwargs: { enable_thinking: false } });
   });
 
+  it("passes gateway options to both models, and none when unset", async () => {
+    const gateway = { id: "default", cacheTtl: 60 };
+    const ai = fakeAi(async (model) => {
+      if (model === PRIMARY_MODEL) throw new Error("boom");
+      return { response: "ok" };
+    });
+    await answerQuestion(ai, "q", gateway);
+    expect(ai.run.mock.calls[0]![2]).toEqual({ gateway });
+    expect(ai.run.mock.calls[1]![2]).toEqual({ gateway });
+
+    const direct = fakeAi(async () => ({ response: "ok" }));
+    await answerQuestion(direct, "q");
+    expect(direct.run.mock.calls[0]).toHaveLength(2);
+  });
+
   it("returns null when both models fail", async () => {
     const ai = fakeAi(async () => {
       throw new Error("down");

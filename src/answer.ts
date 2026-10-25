@@ -46,9 +46,17 @@ export function cleanAnswer(out: unknown): string | null {
   return (lastStop > MAX_ANSWER_CHARS / 2 ? cut.slice(0, lastStop + 1) : cut).trimEnd() + "…";
 }
 
-type RunFn = (model: string, input: Record<string, unknown>) => Promise<unknown>;
+/** AI Gateway options for env.AI.run(). See https://developers.cloudflare.com/ai-gateway/usage/providers/workersai/ */
+export type GatewayOptions = {
+  id: string;
+  skipCache?: boolean;
+  cacheTtl?: number;
+  metadata?: Record<string, string>;
+};
 
-async function callModel(ai: Ai, model: string, question: string): Promise<string | null> {
+type RunFn = (model: string, input: Record<string, unknown>, options?: { gateway?: GatewayOptions }) => Promise<unknown>;
+
+async function callModel(ai: Ai, model: string, question: string, gateway?: GatewayOptions): Promise<string | null> {
   const input: Record<string, unknown> = {
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
@@ -59,14 +67,15 @@ async function callModel(ai: Ai, model: string, question: string): Promise<strin
   };
   // GLM thinks by default; the reasoning tokens would be most of the bill.
   if (model === FALLBACK_MODEL) input.chat_template_kwargs = { enable_thinking: false };
-  return cleanAnswer(await (ai.run as unknown as RunFn)(model, input));
+  const run = ai.run as unknown as RunFn;
+  return cleanAnswer(await (gateway ? run(model, input, { gateway }) : run(model, input)));
 }
 
 /** Tries the primary model, then the fallback. Never throws: null means both failed. */
-export async function answerQuestion(ai: Ai, question: string): Promise<string | null> {
+export async function answerQuestion(ai: Ai, question: string, gateway?: GatewayOptions): Promise<string | null> {
   for (const model of [PRIMARY_MODEL, FALLBACK_MODEL]) {
     try {
-      const answer = await callModel(ai, model, question);
+      const answer = await callModel(ai, model, question, gateway);
       if (answer) return answer;
       console.warn(JSON.stringify({ event: "ai.unusable", model }));
     } catch (err) {
