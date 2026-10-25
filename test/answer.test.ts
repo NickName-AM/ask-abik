@@ -28,6 +28,23 @@ describe("cleanAnswer", () => {
     expect(cleanAnswer(null)).toBeNull();
   });
 
+  it("reads the reply from the reasoning field when content is null (Qwen3, thinking off)", () => {
+    const msg = { content: null, reasoning: "He is open to work.", reasoning_content: "He is open to work." };
+    expect(cleanAnswer({ choices: [{ finish_reason: "stop", message: msg }] })).toBe("He is open to work.");
+  });
+
+  it("prefers content over reasoning, and ignores reasoning cut off at max_tokens", () => {
+    const both = { content: "Yes.", reasoning: "Okay, the user asks..." };
+    expect(cleanAnswer({ choices: [{ finish_reason: "stop", message: both }] })).toBe("Yes.");
+    const cut = { content: null, reasoning: "Okay, the user asks..." };
+    expect(cleanAnswer({ choices: [{ finish_reason: "length", message: cut }] })).toBeNull();
+  });
+
+  it("drops a leftover <think> block", () => {
+    expect(cleanAnswer({ response: "<think>\nhmm, the CV says\n</think>\n\nHe uses Go." })).toBe("He uses Go.");
+    expect(cleanAnswer({ response: "<think>never closed" })).toBeNull();
+  });
+
   it("caps long answers", () => {
     const out = cleanAnswer({ response: "Sentence here. ".repeat(200) })!;
     expect(out.length).toBeLessThanOrEqual(MAX_ANSWER_CHARS + 1);
@@ -41,9 +58,10 @@ describe("answerQuestion", () => {
     expect(await answerQuestion(ai, "Where is he?")).toBe("He is in Kathmandu.");
     expect(ai.run).toHaveBeenCalledTimes(1);
     expect(ai.run.mock.calls[0]![0]).toBe(PRIMARY_MODEL);
+    expect(ai.run.mock.calls[0]![1]).toMatchObject({ chat_template_kwargs: { enable_thinking: false } });
   });
 
-  it("falls back to GLM, with thinking off, when Llama throws", async () => {
+  it("falls back to GLM, with thinking off, when Qwen throws", async () => {
     const ai = fakeAi(async (model) => {
       if (model === PRIMARY_MODEL) throw new Error("boom");
       return { choices: [{ message: { content: "Fallback answer." } }] };

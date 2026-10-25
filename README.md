@@ -3,9 +3,9 @@
 A small Cloudflare Worker that answers visitors' questions about Abik Maharjan, using his CV.
 The portfolio's "Ask about me" form calls it server-side.
 
-- Model: `@cf/meta/llama-3.2-3b-instruct` on Workers AI, falling back to `@cf/zai-org/glm-4.7-flash`.
+- Model: `@cf/qwen/qwen3-30b-a3b-fp8` (thinking off) on Workers AI, falling back to `@cf/zai-org/glm-4.7-flash`.
 - Knowledge: `profile/cv.md`, inserted in full into `profile/system-prompt.md` at `{{CV}}`. No RAG.
-- Cost: Workers Free plan only. One question is about 20 neurons out of 10,000/day.
+- Cost: Workers Free plan only. One question is about 8-10 neurons out of 10,000/day.
 
 ## API
 

@@ -4,7 +4,7 @@
 import cv from "../profile/cv.md";
 import systemTemplate from "../profile/system-prompt.md";
 
-export const PRIMARY_MODEL = "@cf/meta/llama-3.2-3b-instruct";
+export const PRIMARY_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
 export const FALLBACK_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 /** Longest answer we pass back to the site. */
@@ -19,11 +19,24 @@ export function userMessage(question: string): string {
   return `<question>${question.replace(/<\/?question>/gi, "")}</question>`;
 }
 
+type Choice = {
+  finish_reason?: unknown;
+  message?: { content?: unknown; reasoning_content?: unknown; reasoning?: unknown };
+};
+
 function extractText(out: unknown): unknown {
   if (out && typeof out === "object") {
-    const o = out as { choices?: { message?: { content?: unknown } }[]; response?: unknown };
-    const content = o.choices?.[0]?.message?.content;
+    const o = out as { choices?: Choice[]; response?: unknown };
+    const choice = o.choices?.[0];
+    const content = choice?.message?.content;
     if (content !== undefined && content !== null) return content;
+    // With thinking off, Workers AI returns Qwen3's reply in the reasoning
+    // field and leaves content null. A reply cut off at max_tokens could be
+    // unfinished thinking instead, so that one is never shown.
+    if (choice && choice.finish_reason !== "length") {
+      const reply = choice.message?.reasoning_content ?? choice.message?.reasoning;
+      if (reply !== undefined && reply !== null) return reply;
+    }
     if (o.response !== undefined) return o.response;
   }
   return out;
@@ -34,6 +47,8 @@ export function cleanAnswer(out: unknown): string | null {
   const value = extractText(out);
   if (typeof value !== "string") return null;
   const text = value
+    // A model that thinks anyway can leave its reasoning inline; never show it.
+    .replace(/<think>[\s\S]*?(<\/think>|$)/gi, "")
     .replace(/\*\*|__|`/g, "")
     .replace(/[ \t]+/g, " ")
     .replace(/\s*\n\s*/g, "\n")
@@ -65,8 +80,8 @@ async function callModel(ai: Ai, model: string, question: string, gateway?: Gate
     max_tokens: 300,
     temperature: 0.2,
   };
-  // GLM thinks by default; the reasoning tokens would be most of the bill.
-  if (model === FALLBACK_MODEL) input.chat_template_kwargs = { enable_thinking: false };
+  // Both models think by default; the reasoning tokens would be most of the bill.
+  input.chat_template_kwargs = { enable_thinking: false };
   // bind: the real binding reads private fields off `this`; a detached call throws.
   const run = (ai.run as unknown as RunFn).bind(ai);
   return cleanAnswer(await (gateway ? run(model, input, { gateway }) : run(model, input)));
