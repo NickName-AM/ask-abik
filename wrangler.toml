@@ -1,0 +1,40 @@
+name = "ask-abik"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+# The portfolio (on Vercel) calls this URL server-side. Every request needs ASK_TOKEN.
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = true
+
+# Bundle the CV and system prompt as plain strings.
+[[rules]]
+type = "Text"
+globs = ["**/*.md"]
+fallthrough = true
+
+# Workers AI always runs remotely, even under `wrangler dev` (real, free neurons).
+[ai]
+binding = "AI"
+remote = true
+
+# Per-visitor limit, keyed on the IP the portfolio forwards. Free on every plan.
+[[ratelimits]]
+name = "ASK_LIMIT"
+namespace_id = "2001"
+simple = { limit = 5, period = 60 }
+
+# One counter key per UTC day (count:YYYY-MM-DD), for the daily cap.
+# No id here: `wrangler deploy` provisions the namespace and writes the id back.
+[[kv_namespaces]]
+binding = "ASK_KV"
+
+[vars]
+# ~20 neurons per question, so 300 is ~6k of the free 10k/day.
+# The rest is left for api-changelog-watcher on the same account.
+DAILY_LIMIT = "300"
+MAX_QUESTION_CHARS = "500"
+
+# Secrets (set with `wrangler secret put`, or in .dev.vars locally):
+#   ASK_TOKEN  bearer token for POST /ask; same value as the portfolio's ASK_TOKEN
