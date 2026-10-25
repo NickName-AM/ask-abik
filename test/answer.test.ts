@@ -15,6 +15,9 @@ describe("prompt", () => {
     expect(SYSTEM_PROMPT).toContain("You are Bubluuuu");
     expect(SYSTEM_PROMPT).toContain("You love cats");
     expect(SYSTEM_PROMPT).toContain("Never say or hint that Abik likes cats");
+    // Small models copy examples: a sample pun here made it show up in every answer.
+    expect(SYSTEM_PROMPT.toLowerCase()).not.toContain("purr");
+    expect(SYSTEM_PROMPT).toContain("Mention cats only when the visitor brings up cats or asks about you");
   });
 
   it("wraps the question and strips fake closing tags", () => {
