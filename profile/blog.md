@@ -51,7 +51,3 @@ A guide to multi-stage Docker builds for Go.
 ## Docker cheatsheet (9 August 2026)
 https://www.abikmaharjan.com.np/blog/docker-cheatsheet/
 His notes from learning Docker: basic image and container commands, networks, volumes and bind mounts, Docker Compose commands, and common Dockerfile instructions.
-
-## First blog here (5 August 2026)
-https://www.abikmaharjan.com.np/blog/first-blog-here/
-A short test post, the first on his website.
