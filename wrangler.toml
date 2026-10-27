@@ -39,7 +39,7 @@ MAX_QUESTION_CHARS = "500"
 # Use your own name only after creating that gateway in the dashboard; "" turns it off.
 AI_GATEWAY_ID = "default"
 # Seconds an identical question is answered from the gateway cache (no neurons used).
-# Cached answers can be up to this old after you edit profile/cv.md.
+# Cached answers can be up to this old after you edit profile/cv.md or profile/blog.md.
 AI_CACHE_TTL = "86400"
 
 # Secrets (set with `wrangler secret put`, or in .dev.vars locally):

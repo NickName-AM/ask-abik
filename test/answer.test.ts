@@ -8,6 +8,9 @@ describe("prompt", () => {
     expect(SYSTEM_PROMPT).toContain("# Abik Maharjan — CV");
     expect(SYSTEM_PROMPT).toContain("maharjanebik061@gmail.com");
     expect(SYSTEM_PROMPT).not.toContain("{{CV}}");
+    expect(SYSTEM_PROMPT).not.toContain("{{BLOG}}");
+    expect(SYSTEM_PROMPT).toContain("# Abik's Blog — Notes");
+    expect(SYSTEM_PROMPT).toContain("https://www.abikmaharjan.com.np/blog/the-queue-is-not-the-hard-part/");
     expect(SYSTEM_PROMPT).toContain("<question>");
   });
 
