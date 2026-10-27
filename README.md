@@ -68,3 +68,9 @@ npx wrangler deploy               # creates the KV namespace, prints the workers
 ```
 
 Then set `ASK_WORKER_URL` and `ASK_TOKEN` in the portfolio's Vercel project.
+
+## TODO
+
+- [ ] Add rate limiting per client
+- [ ] Cache common answers in KV
+- [ ] Add more tests for edge-case questions
